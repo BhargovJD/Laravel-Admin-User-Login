@@ -1,66 +1,108 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+1.laravel new app
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+2.php artisan serve
 
-## About Laravel
+3.in .env set database info
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+4.Auth system:
+	composer require laravel/ui
+	php artisan ui:auth
+		it will create some folder in resources/views folder	
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+5.Add Boostrap(layouts/app.blade.php)
+	css:<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+	
+	bundle css:<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+	
+	add this two in layouts/app.blade.php
+	
+	add margin 'form-group row m-3' to auth/login.blade.php and auth/register.blade.php
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+6.Before register a user:
+	php artisan migrate
 
-## Learning Laravel
+7.After log in sometimes Dropdown list button will not work.
+	edit layouts/app.blade.php
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+		<li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ Auth::user()->name }}
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                              <li>
+                                  <a class="dropdown-item" href="#">My Profile</a>
+                                </li>
+                              <li>
+                                  <a class="dropdown-item" href="{{ route('logout') }} " onclick="event.preventDefault();
+                                  document.getElementById('logout-form').submit();">
+                     {{ __('Logout') }} </a>
+                     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                        @csrf
+                    </form>
+                                </li>
+                            </ul>
+                          </li>
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+8.Admin role
 
-## Laravel Sponsors
+	Databases/migrations/create users table.php
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+		$table->tinyInteger('role_as')->default('0');
 
-### Premium Partners
+	we already migrated our database so change directly in database.
+	add one column in users as as_role which is tiny int and default value is 0.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[CMS Max](https://www.cmsmax.com/)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
-- **[Romega Software](https://romegasoftware.com)**
+9.middleware
+	php artisan make:middleware AdminMiddleware
+	Middleware created in App/Http/Middleware
 
-## Contributing
+10.in AdminMiddleWare
+	use Illuminate\Support\Facades\Auth;
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+	public function handle(Request $request, Closure $next)
+    {
+        if(Auth::check()){
+            if(Auth::user()->role_as=="1"){
+                return $next($request);
+            }
+            else{
+                return redirect('/home')->with('status','Access Denied! as you are not as admin');
+            }
+        }
 
-## Code of Conduct
+        else{
+            return redirect('/home')->with('status','please login first');
+        }
+    }
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+11.In Kernal.php we have to register our middleware:
+	protected $routeMiddleware = [
+        'isAdmin' => \App\Http\Middleware\AdminMiddleware::class,
+    ];
 
-## Security Vulnerabilities
+12. Check who is login using controller
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+	In App/http/auth/LoginController.php
 
-## License
+	use Illuminate\Support\Facades\Auth;
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+		protected function authenticated()
+    {
+        if(Auth::user()->role_as=='1')
+        {
+            return redirect('dashboard')->with('status','welcome to your dashboard');
+        }
+        elseif(Auth::user()->role_as=='0')
+        {
+            return redirect('/')->with('status','logged in successfully');
+        }
+    }
+
+13. Using controller through route in Routes/Web.php
+
+	Route::middleware(['auth','isAdmin'])->group(function(){
+    Route::get('/dashboard',function(){
+        return 'This is admin';
+    });
+});
